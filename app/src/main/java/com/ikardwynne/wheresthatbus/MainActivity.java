@@ -25,7 +25,8 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
-import com.google.android.gms.location.ActivityRecognition;
+ import com.google.android.gms.common.api.Status;
+ import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -78,6 +79,13 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     //Used for User Location.
     private Location location;
     private LocationRequest mLocationRequest;
+    private boolean mLocationUpdateOn;
+    private boolean mLocationUpdateRequested;
+    private static final String LOCATION_UPDATE = "locationStatus";
+    private static final String LOCATION_UPDATE_REQUESTED = "locationStatusRequested";
+    public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 10000;
+    public static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
+            UPDATE_INTERVAL_IN_MILLISECONDS / 2;
 
     private FragmentManager mFragmentManager;
     private MapFragment mMapFragment;
@@ -96,8 +104,8 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
         setContentView(R.layout.activity_main);
 
         //register action receiver
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-                new IntentFilter("user_activity"));
+       /* LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
+                new IntentFilter("user_activity"));*/
 
         String action = getIntent().getStringExtra("activity");
         if(action != null)
@@ -112,9 +120,12 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
         location = null;
         map = null;
         marker = null;
-        mLocationRequest = createLocationRequest();
         mResolvingError = savedInstanceState != null
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
+        mLocationUpdateOn = savedInstanceState != null
+                && savedInstanceState.getBoolean(LOCATION_UPDATE, false);
+        mLocationUpdateRequested = savedInstanceState != null
+                && savedInstanceState.getBoolean(LOCATION_UPDATE_REQUESTED, false);
 
         //set up parse database.
         //Parse.enableLocalDatastore(this);
@@ -141,9 +152,25 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(STATE_RESOLVING_ERROR, mResolvingError);
+        outState.putBoolean(LOCATION_UPDATE, mLocationUpdateOn);
+        outState.putBoolean(LOCATION_UPDATE_REQUESTED, mLocationUpdateRequested);
     }
 
-    //Method used to receive broadcasts from ActivityRecognitionIntentService.
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(mLocationUpdateRequested && !mLocationUpdateOn)
+            startLocationUpdates();
+    }
+
+    @Override
+    protected void onPause() {
+        if(mLocationUpdateOn)
+            stopLocationUpdates();
+        super.onPause();
+    }
+
+    /*//Method used to receive broadcasts from ActivityRecognitionIntentService.
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -174,14 +201,14 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
                     Log.v(TAG, "Error: action string is wrong: " + action);
             }
         // }
-    }
+    }*/
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == Activity.RESULT_OK) {
-            String value = data.getStringExtra("selection");
+            //String value = data.getStringExtra("selection");
             switch (requestCode) {
-                case ON_FOOT_CODE:
+                /*case ON_FOOT_CODE:
                     switch (value) {
                         case "exit":
                             quitUpdates();
@@ -229,7 +256,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
                             Log.v(TAG, "odd value in vehicle code: " +value);
                             isShowing = false;
                     }
-                    break;
+                    break;*/
                 //used on google services and connection failures.
                 case REQUEST_RESOLVE_ERROR:
                     mResolvingError = false;
@@ -243,7 +270,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
     private void quitUpdates(){
         stopUpdates();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        //LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
     }
 
     @Override
@@ -280,17 +307,14 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
         }
     }
 
-    private GoogleApiClient getClient(){
-        if(mClient == null){
-            //make new client
-            mClient = new GoogleApiClient.Builder(this)
-                    .addApi(ActivityRecognition.API)
-                    .addApi(LocationServices.API)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .build();
-        }
-        return mClient;
+    protected synchronized void buildGoogleApiClient() {
+        Log.i(TAG, "Building GoogleApiClient");
+        mClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .addApi(ActivityRecognition.API)
+                .build();
     }
 
     private PendingIntent getPendingIntent(){
@@ -303,59 +327,49 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     }
 
     public void startUpdates() {
-
-        // Set the request type to START
-        mRequestType = REQUEST_TYPE.START;
-
-        // Check for Google Play services
-        serviceAvailable();
-        // If a request is not already underway
-        if (!mInProgress) {
-            // Request a connection to Location Services
-            connect();
-        } else {
-            //if something is in progress...
+        Log.i(TAG, "Starting updates");
+        mRequestType = REQUEST_TYPE.START; // Set the request type to START
+        serviceAvailable(); //check if google services is available.
+        buildGoogleApiClient(); //make a client
+        createLocationRequest();
+        // Request a connection to Location Services
+        // on failure disconnect service and try again.
+        if(!connect()){
+            Log.d(TAG, "startUpdates: issue connecting going to try again");
             disconnect();
             startUpdates();
         }
     }
 
     public void stopUpdates() {
-        // Set the request type to STOP
-        mRequestType = REQUEST_TYPE.STOP;
-
-        // Check for Google Play services
-        serviceAvailable();
-        // If a request is not already underway
-        if (!mInProgress) {
-            // Request a connection to Location Services
-            connect();
-        } else {
-            //if something is in progress
+        Log.i(TAG, "Stopping updates");
+        mRequestType = REQUEST_TYPE.STOP; // Set the request type to STOP
+        serviceAvailable(); // Check for Google Play services
+        // Request a connection to Location Services
+        // on failure disconnect service and try again.
+        disconnect();
+        if(!connect()){
+            Log.v(TAG, "StopUpdates: issue connecting going to try again");
             disconnect();
             stopUpdates();
         }
     }
 
     private boolean connect() {
-        // Indicate that a request is in progress
-        mInProgress = true;
-        if (!getClient().isConnected() && !mClient.isConnecting()) {
+        if (!mInProgress && !mClient.isConnected() && !mClient.isConnecting()) {
+            mInProgress = true;
             mClient.connect();
             return true;
         } else {
-            Log.v(TAG, "GoogleApiClient already connected or is unavailable");
-            mInProgress = false;
+            Log.d(TAG, "GoogleApiClient already connected or is unavailable");
             return false;
         }
     }
 
     public boolean disconnect(){
-        serviceAvailable();
         if (mClient.isConnected()) {
             mInProgress = false;
             mClient.disconnect();
-            mClient = null;
             return true;
         } else {
             Log.v(TAG, "GoogleApiClient already disconnected or is unavailable");
@@ -373,24 +387,21 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
          */
         switch (mRequestType) {
             case START:
+                Log.v(TAG, "onConnected called with start");
                 ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mClient, DETECTION_INTERVAL_MILLISECONDS, getPendingIntent());
-                //get location and start updates
                 getCurrentLocation();
-                startLocationUpdates();
                 break;
             case STOP:
+                Log.v(TAG, "onConnected called with stop");
                 ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mClient, mPendingIntent);
-                stopLocationUpdates();
+                if(mLocationUpdateOn) {
+                    stopLocationUpdates();
+                    mLocationUpdateRequested = false;
+                }
                 break;
             default:
                 Log.v(TAG, "Bad Request type");
         }
-
-        /*
-         * Since the preceding call is synchronous, turn off the
-         * in progress flag and disconnect the client
-         */
-        disconnect();
     }
 
     @Override
@@ -440,20 +451,39 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
     /*This Section used for user location*/
 
-    private LocationRequest createLocationRequest() {
-        LocationRequest request = new LocationRequest();
-        request.setInterval(DETECTION_INTERVAL_MILLISECONDS);
-        request.setFastestInterval(MILLISECONDS_PER_SECOND * 5);
-        request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        return request;
+    protected void createLocationRequest() {
+        mLocationRequest = new LocationRequest();
+
+        // Sets the desired interval for active location updates. This interval is
+        // inexact. You may not receive updates at all if no location sources are available, or
+        // you may receive them slower than requested. You may also receive updates faster than
+        // requested if other applications are requesting location at a faster interval.
+        mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
+
+        // Sets the fastest rate for active location updates. This interval is exact, and your
+        // application will never receive updates faster than this value.
+        mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
+
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
     private void startLocationUpdates(){
-        LocationServices.FusedLocationApi.requestLocationUpdates(mClient, mLocationRequest, this);
+        if(mClient != null && mClient.isConnected() && mLocationRequest != null && !mLocationUpdateOn) {
+            Log.v(TAG, "Starting Location Updates");
+            LocationServices.FusedLocationApi.requestLocationUpdates(mClient, mLocationRequest, this);
+            mLocationUpdateOn = true;
+        }else{
+            Log.v(TAG, "Issue starting Location Updates");
+        }
     }
 
     private void stopLocationUpdates() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
+        Log.v(TAG, "Stopping Location Update");
+        if(mLocationUpdateOn) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
+            mLocationUpdateOn = false;
+        }else
+            Log.d(TAG, "issue stopping location updates");
     }
 
     public Location getCurrentLocation() {
@@ -463,24 +493,29 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
     }
 
-
-    //Should prob do a lot of work.
     @Override
     public void onLocationChanged(Location location) {
-        this.location = location;
-        Toast.makeText(this, "New Location: "+ location.toString(), Toast.LENGTH_SHORT).show();
-        //update markers and camera location.
-        if(map != null) {
-            if (marker != null)
-                marker.remove();
-            marker = setNewMarker();
-            map.moveCamera(updateCamera());
+        if(this.location != location) {
+            this.location = location;
+            //update markers and camera location.
+            if (map != null) {
+                if (marker != null)
+                    marker.remove();
+                marker = setNewMarker();
+                map.moveCamera(updateCamera());
+            }
+            Toast.makeText(this, "Location Update: "+location.getLatitude()+", "+location.getLongitude(), Toast.LENGTH_SHORT).show();
         }
     }
 
 
    @Override
     public void find(String bus_selection) {
+
+       if(!mLocationUpdateOn) {
+           startLocationUpdates();
+           mLocationUpdateRequested = true;
+       }
         //take selection, find the info for that bus
         //then launch appropriate fragment.
         startMapFragment();
@@ -499,7 +534,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
                                    getCurrentLocation().getLongitude());
         return map.addMarker(new MarkerOptions()
                 .position(latLng)
-                .title("Current location"));
+                .title("Your Current Location"));
     }
 
     private CameraUpdate updateCamera(){

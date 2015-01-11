@@ -45,7 +45,9 @@ public class ActivityRecognitionIntentService extends IntentService {
             int confidence = mostProbableActivity.getConfidence();
             int activityType = mostProbableActivity.getType();
 
-
+            //REMOVE: for testing purposes only
+            //String activityName = getNameFromType(activityType);
+            //sendNotification(activityName+" Confidence Level: " + confidence);
 
             if((activityType == DetectedActivity.IN_VEHICLE) && confidence >= MIN_CONFIDENCE_LEVEL)
                 ///sendIntent(VEHICLE);
