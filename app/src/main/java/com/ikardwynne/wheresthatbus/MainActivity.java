@@ -60,12 +60,9 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
     //constants for detection interval.
     private static final int MILLISECONDS_PER_SECOND = 1000;
-    private static final int DETECTION_INTERVAL_SECONDS = 10;
-    private static final int DETECTION_INTERVAL_MILLISECONDS = MILLISECONDS_PER_SECOND * DETECTION_INTERVAL_SECONDS;
-
-    //deciding what the user wants the service to do.
-    private enum REQUEST_TYPE {START, STOP}
-    private REQUEST_TYPE mRequestType;
+    private static final int DETECTION_INTERVAL_SECONDS = 13;
+    private static final int DETECTION_INTERVAL_MILLISECONDS =
+            MILLISECONDS_PER_SECOND * DETECTION_INTERVAL_SECONDS;
 
     // Request code to use when launching the resolution activity
     private static final int REQUEST_RESOLVE_ERROR = 1001;
@@ -83,7 +80,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     private boolean mLocationUpdateRequested;
     private static final String LOCATION_UPDATE = "locationStatus";
     private static final String LOCATION_UPDATE_REQUESTED = "locationStatusRequested";
-    public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 10000;
+    public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 15000;
     public static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
 
@@ -91,12 +88,6 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     private MapFragment mMapFragment;
     private GoogleMap map;
     private Marker marker;
-
-    //For the dialog activities
-    private boolean isShowing;
-    private String lastActivity;
-    private static final int ON_FOOT_CODE = 4832;
-    private static final int IN_VEHICLE_CODE = 4932;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,8 +103,6 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
             Log.v(TAG, action);
 
         //set variables
-        isShowing = false;
-        lastActivity = "still";
         mPendingIntent = null;
         mClient = null;
         mInProgress = false;
@@ -263,14 +252,9 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
                     startUpdates();
                     break;
                 default:
-                    Log.v(TAG, "Error: Bad request code in onActivityResults");
+                    Log.d(TAG, "Error: Bad request code in onActivityResults");
             }
         }
-    }
-
-    private void quitUpdates(){
-        stopUpdates();
-        //LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
     }
 
     @Override
@@ -289,7 +273,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            quitUpdates();
+            stopUpdates();
             finish();
         }
 
@@ -308,7 +292,6 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     }
 
     protected synchronized void buildGoogleApiClient() {
-        Log.i(TAG, "Building GoogleApiClient");
         mClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -317,18 +300,8 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
                 .build();
     }
 
-    private PendingIntent getPendingIntent(){
-        if(mPendingIntent == null){
-            //make a pending intent.
-            Intent intent = new Intent(this, ActivityRecognitionIntentService.class);
-            mPendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        }
-        return mPendingIntent;
-    }
-
     public void startUpdates() {
         Log.i(TAG, "Starting updates");
-        mRequestType = REQUEST_TYPE.START; // Set the request type to START
         serviceAvailable(); //check if google services is available.
         buildGoogleApiClient(); //make a client
         createLocationRequest();
@@ -343,14 +316,16 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
     public void stopUpdates() {
         Log.i(TAG, "Stopping updates");
-        mRequestType = REQUEST_TYPE.STOP; // Set the request type to STOP
         serviceAvailable(); // Check for Google Play services
-        // Request a connection to Location Services
-        // on failure disconnect service and try again.
-        disconnect();
-        if(!connect()){
-            Log.v(TAG, "StopUpdates: issue connecting going to try again");
+        if(mClient.isConnected()){
+            ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mClient, mPendingIntent);
+            if(mLocationUpdateOn) {
+                stopLocationUpdates();
+                mLocationUpdateRequested = false;
+            }
             disconnect();
+        }else{
+            connect();
             stopUpdates();
         }
     }
@@ -368,13 +343,22 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
     public boolean disconnect(){
         if (mClient.isConnected()) {
-            mInProgress = false;
             mClient.disconnect();
+            mInProgress = false;
             return true;
         } else {
             Log.v(TAG, "GoogleApiClient already disconnected or is unavailable");
             return false;
         }
+    }
+
+    private PendingIntent getPendingIntent(){
+        if(mPendingIntent == null){
+            //make a pending intent.
+            Intent intent = new Intent(this, ActivityRecognitionIntentService.class);
+            mPendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        }
+        return mPendingIntent;
     }
 
 
@@ -385,23 +369,9 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
          * detection interval and PendingIntent. This call is
          * synchronous.
          */
-        switch (mRequestType) {
-            case START:
-                Log.v(TAG, "onConnected called with start");
-                ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mClient, DETECTION_INTERVAL_MILLISECONDS, getPendingIntent());
-                getCurrentLocation();
-                break;
-            case STOP:
-                Log.v(TAG, "onConnected called with stop");
-                ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mClient, mPendingIntent);
-                if(mLocationUpdateOn) {
-                    stopLocationUpdates();
-                    mLocationUpdateRequested = false;
-                }
-                break;
-            default:
-                Log.v(TAG, "Bad Request type");
-        }
+        Log.v(TAG, "onConnected called with start");
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mClient, DETECTION_INTERVAL_MILLISECONDS, getPendingIntent());
+        getCurrentLocation();
     }
 
     @Override
@@ -445,7 +415,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     @Override
     public void onConnectionSuspended(int arg0) {
         //TODO: you should fill this in also.
-        Log.v(TAG, "The connection was Suspended");
+        Log.d(TAG, "The connection was Suspended");
     }
 
 
@@ -453,33 +423,24 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
     protected void createLocationRequest() {
         mLocationRequest = new LocationRequest();
-
-        // Sets the desired interval for active location updates. This interval is
-        // inexact. You may not receive updates at all if no location sources are available, or
-        // you may receive them slower than requested. You may also receive updates faster than
-        // requested if other applications are requesting location at a faster interval.
         mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
-
-        // Sets the fastest rate for active location updates. This interval is exact, and your
-        // application will never receive updates faster than this value.
         mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
-
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
     }
 
     private void startLocationUpdates(){
         if(mClient != null && mClient.isConnected() && mLocationRequest != null && !mLocationUpdateOn) {
-            Log.v(TAG, "Starting Location Updates");
+            Log.i(TAG, "Starting Location Updates");
             LocationServices.FusedLocationApi.requestLocationUpdates(mClient, mLocationRequest, this);
             mLocationUpdateOn = true;
         }else{
-            Log.v(TAG, "Issue starting Location Updates");
+            Log.d(TAG, "Issue starting Location Updates");
         }
     }
 
     private void stopLocationUpdates() {
-        Log.v(TAG, "Stopping Location Update");
-        if(mLocationUpdateOn) {
+        Log.i(TAG, "Stopping Location Update");
+        if(mClient != null && mLocationUpdateOn) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
             mLocationUpdateOn = false;
         }else
@@ -504,10 +465,12 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
                 marker = setNewMarker();
                 map.moveCamera(updateCamera());
             }
-            Toast.makeText(this, "Location Update: "+location.getLatitude()+", "+location.getLongitude(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Location Update: "+this.location.getLatitude()+", "+this.location.getLongitude(), Toast.LENGTH_SHORT).show();
         }
     }
 
+
+    /*Start of Google Map Implementation*/
 
    @Override
     public void find(String bus_selection) {
