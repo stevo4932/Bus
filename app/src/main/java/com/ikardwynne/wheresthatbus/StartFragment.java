@@ -12,9 +12,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 
-/**
- * Created by scott on 12/23/14.
- */
+
 public class StartFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
     private String bus_selection = null;

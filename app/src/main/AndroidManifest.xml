@@ -43,11 +43,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ActionActivity"
-            android:label="@string/title_activity_action"
-            android:theme="@android:style/Theme.Holo.Dialog.NoActionBar">
-        </activity>
     </application>
 
 </manifest>

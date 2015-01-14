@@ -46,7 +46,8 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
                                                       ConnectionCallbacks,
                                                       OnConnectionFailedListener,
                                                       LocationListener,
-                                                      StartFragment.Callbacks{
+                                                      StartFragment.Callbacks,
+                                                      NotificationFragment.NotificationCallbacks{
 
     private final static String TAG = "MainActivity";
     //Pending intent used when fetching activity.
@@ -94,16 +95,9 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //register action receiver
-       /* LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-                new IntentFilter("user_activity"));*/
-
-        String action = getIntent().getStringExtra("activity");
-        if(action != null)
-            Log.v(TAG, action);
-
         //set variables
         mPendingIntent = null;
+        mFragmentManager = getFragmentManager();
         mClient = null;
         mInProgress = false;
         location = null;
@@ -125,15 +119,31 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
         testObject.put("foo", "bar");
         testObject.saveInBackground();*/
 
+
         //start google play services.
         startUpdates();
 
-        //display start Fragment.
-        if (savedInstanceState == null) {
-            mFragmentManager = getFragmentManager();
+        String action = getIntent().getStringExtra("activity");
+        if(action != null) {
+            Log.v(TAG, action);
+
+            Bundle b = new Bundle();
+            b.putString("activity", action);
+            NotificationFragment nFrag = new NotificationFragment();
+            nFrag.setArguments(b);
+
             mFragmentManager.beginTransaction()
-                    .add(R.id.container, new StartFragment())
+                    .add(R.id.container, nFrag)
                     .commit();
+
+        }else {
+
+            //display start Fragment.
+            if (savedInstanceState == null) {
+                mFragmentManager.beginTransaction()
+                        .add(R.id.container, new StartFragment())
+                        .commit();
+            }
         }
     }
 
@@ -159,102 +169,14 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
         super.onPause();
     }
 
-    /*//Method used to receive broadcasts from ActivityRecognitionIntentService.
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // Get extra data included in the Intent
-            Log.v(TAG, "OnRecieve called");
-            if (!isShowing) {
-                isShowing = true;
-                String activity = intent.getStringExtra("Activity");
-                goToActionActivity(activity);
-            }
-        }
-    };
-
-    private void goToActionActivity(String action){
-        //if(!action.equals(lastActivity)) {
-            Intent actionIntent = new Intent(this, ActionActivity.class);
-            //actionIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            actionIntent.putExtra("action", action);
-            actionIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-            switch (action) {
-                case "onfoot":
-                    startActivityForResult(actionIntent, ON_FOOT_CODE);
-                    break;
-                case "vehicle":
-                    startActivityForResult(actionIntent, IN_VEHICLE_CODE);
-                    break;
-                default:
-                    Log.v(TAG, "Error: action string is wrong: " + action);
-            }
-        // }
-    }*/
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == Activity.RESULT_OK) {
-            //String value = data.getStringExtra("selection");
-            switch (requestCode) {
-                /*case ON_FOOT_CODE:
-                    switch (value) {
-                        case "exit":
-                            quitUpdates();
-                            finish();
-                            break;
-                        case "yes":
-                            //They are still waiting on the bus so we should also continue waiting.
-                            Log.v(TAG, "Yes pressed (on foot)");
-                            lastActivity = "onfoot";
-                            isShowing = false;
-                            break;
-                        case "no":
-                            //They are no longer waiting on the bus so we should stop tracking them.
-                            // but they may not want to exit out of the app.
-                            Log.v(TAG, "No pressed (on foot)");
-                            quitUpdates();
-                            finish();
-                            break;
-                        default:
-                            Log.v(TAG, "odd value on foot code: " +value);
-                            isShowing = false;
-                    }
-                    break;
-                case IN_VEHICLE_CODE:
-                    switch (value) {
-                        case "exit":
-                            quitUpdates();
-                            finish();
-                            break;
-                        case "yes":
-                            Log.v(TAG, "Yes pressed (in vehicle)");
-                            //Need to possibly update location of bus.
-                            //Send user's location updates to parse backend.
-                            lastActivity = "vehicle";
-                            isShowing = false;
-                            break;
-                        case "no":
-                            Log.v(TAG, "No pressed (in vehicle)");
-                            //Probably should not do anything as their activity
-                            //is ambiguous since google is fallible.
-                            lastActivity = "vehicle";
-                            isShowing = false;
-                            break;
-                        default:
-                            Log.v(TAG, "odd value in vehicle code: " +value);
-                            isShowing = false;
-                    }
-                    break;*/
-                //used on google services and connection failures.
-                case REQUEST_RESOLVE_ERROR:
-                    mResolvingError = false;
-                    startUpdates();
-                    break;
-                default:
-                    Log.d(TAG, "Error: Bad request code in onActivityResults");
-            }
-        }
+        if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_RESOLVE_ERROR) {
+            //used on google services and connection failures.
+            mResolvingError = false;
+            startUpdates();
+        }else
+            Log.d(TAG, "Error: Bad request code in onActivityResults");
     }
 
     @Override
@@ -272,7 +194,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_exit ) {
             stopUpdates();
             finish();
         }
@@ -280,7 +202,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
         return super.onOptionsItemSelected(item);
     }
 
-    /*Start of the Google Services Implentation*/
+    /*Start of the Google Services Implementation*/
 
     //check for google services if not you should probably display something.
     public void serviceAvailable(){
@@ -364,11 +286,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
     @Override
     public void onConnected(Bundle dataBundle) {
-        /*
-         * Request activity recognition updates using the preset
-         * detection interval and PendingIntent. This call is
-         * synchronous.
-         */
+        //request activity recognition updates and get last know location.
         Log.v(TAG, "onConnected called with start");
         ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mClient, DETECTION_INTERVAL_MILLISECONDS, getPendingIntent());
         getCurrentLocation();
@@ -472,7 +390,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
     /*Start of Google Map Implementation*/
 
-   @Override
+    @Override
     public void find(String bus_selection) {
 
        if(!mLocationUpdateOn) {
@@ -481,6 +399,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
        }
         //take selection, find the info for that bus
         //then launch appropriate fragment.
+       //TODO: start asynch task to fetch latest bus information if available.
         startMapFragment();
     }
 
@@ -488,6 +407,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
         mMapFragment = MapFragment.newInstance();
         mFragmentManager.beginTransaction()
             .replace(R.id.container, mMapFragment)
+            .addToBackStack(null)
             .commit();
         mMapFragment.getMapAsync(this);
     }
@@ -514,6 +434,24 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
         map.setIndoorEnabled(false);
         map.moveCamera(updateCamera());
 
+    }
+
+    /* callback methods for Notification Fragments*/
+    @Override
+    public void updateBus(){
+        Log.i(TAG, "Updating the location of the bus");
+        //update bus location.
+    }
+    @Override
+    public void waitForBus(){
+        Log.i(TAG, "waiting for the bus some more");
+        finish();
+    }
+    @Override
+    public void exit(){
+        Log.i(TAG, "made it to exit function");
+        stopUpdates();
+        finish();
     }
 
     /* A fragment to display an error dialog */

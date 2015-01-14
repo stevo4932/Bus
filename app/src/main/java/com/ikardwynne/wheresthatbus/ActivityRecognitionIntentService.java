@@ -18,8 +18,8 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     private static final String TAG = "ActivityRecognitionIntentService";
     private static final int MIN_CONFIDENCE_LEVEL = 75;
-    private static boolean isShowing = false;
     private static final int UPDATE_ID = 5;
+    private int lastActivity = -1;
 
     public static final String FOOT = "onfoot";
     public static final String VEHICLE = "vehicle";
@@ -46,19 +46,19 @@ public class ActivityRecognitionIntentService extends IntentService {
             int activityType = mostProbableActivity.getType();
 
             //REMOVE: for testing purposes only
-            //String activityName = getNameFromType(activityType);
-            //sendNotification(activityName+" Confidence Level: " + confidence);
+            String activityName = getNameFromType(activityType);
 
-            if((activityType == DetectedActivity.IN_VEHICLE) && confidence >= MIN_CONFIDENCE_LEVEL)
-                ///sendIntent(VEHICLE);
-                sendNotification(VEHICLE);
-
-            else if(activityType == DetectedActivity.ON_FOOT && confidence >= MIN_CONFIDENCE_LEVEL)
-                //sendIntent(FOOT);
-                sendNotification(FOOT);
-
-
-        } else {
+            Log.d(TAG, "activity: "+activityName);
+            if(lastActivity != activityType && confidence >= MIN_CONFIDENCE_LEVEL){
+                if(activityType == DetectedActivity.IN_VEHICLE) {
+                    sendNotification(VEHICLE);
+                    lastActivity = activityType;
+                }else if(activityType == DetectedActivity.ON_FOOT) {
+                    sendNotification(FOOT);
+                    lastActivity = activityType;
+                }
+            }
+        }else {
             /*This implementation ignores intents that don't contain
               an activity update. */
             Log.d(TAG, "Error: No activity update");
@@ -85,15 +85,6 @@ public class ActivityRecognitionIntentService extends IntentService {
         return "unknown";
     }
 
-    private void sendIntent(String activity){
-        isShowing = true;
-        Log.v("intent", "sending intent");
-        Intent activityintent = new Intent("user_activity");
-        activityintent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-        activityintent.putExtra("Activity", activity);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(activityintent);
-    }
-
     private void sendNotification(String activity){
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.common_ic_googleplayservices)
@@ -116,6 +107,7 @@ public class ActivityRecognitionIntentService extends IntentService {
 
         PendingIntent pendIntent = PendingIntent.getActivity(this, NOTIFCATION_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         mBuilder.setContentIntent(pendIntent);
+        mBuilder.setAutoCancel(true);
 
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         // UPDATE_ID allows you to update the notification later on.
