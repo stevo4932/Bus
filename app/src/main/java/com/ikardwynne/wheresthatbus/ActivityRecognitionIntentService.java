@@ -1,15 +1,12 @@
 package com.ikardwynne.wheresthatbus;
 
 import android.app.IntentService;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
@@ -108,6 +105,8 @@ public class ActivityRecognitionIntentService extends IntentService {
         PendingIntent pendIntent = PendingIntent.getActivity(this, NOTIFCATION_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         mBuilder.setContentIntent(pendIntent);
         mBuilder.setAutoCancel(true);
+        mBuilder.setDefaults(NotificationCompat.DEFAULT_VIBRATE);
+
 
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         // UPDATE_ID allows you to update the notification later on.

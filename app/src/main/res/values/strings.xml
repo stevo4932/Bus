@@ -11,5 +11,8 @@
     <string name="title_activity_main">MainActivity</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_action">ActionActivity</string>
+    <string name="update_camera">Update Camera</string>
+    <string name="update_camera_condensed">Update Camera</string>
+    <string name="exit">Exit</string>
 
 </resources>

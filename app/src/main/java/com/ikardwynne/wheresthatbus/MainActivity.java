@@ -1,63 +1,47 @@
 package com.ikardwynne.wheresthatbus;
 
 
- import android.app.Activity;
+import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.app.FragmentManager;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.IntentSender;
-import android.location.Location;
 import android.os.Bundle;
-import android.support.v4.content.LocalBroadcastManager;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
- import com.google.android.gms.common.api.Status;
- import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.parse.Parse;
-import com.parse.ParseObject;
 
 
-public class MainActivity extends Activity implements OnMapReadyCallback,
-                                                      ConnectionCallbacks,
-                                                      OnConnectionFailedListener,
-                                                      LocationListener,
-                                                      StartFragment.Callbacks,
+
+/*
+  TODO: Fix issue of restarting map view after pressing back button.
+  TODO: attach parse db helper.
+  TODO: finish basic testing.
+  TODO: seems to be sending multiple notifications on waiting of bus.
+  TODO: shared Preferences.
+ */
+public class MainActivity extends Activity implements ConnectionCallbacks,
+                                                      OnConnectionFailedListener, StartFragment.Callbacks,
                                                       NotificationFragment.NotificationCallbacks{
 
     private final static String TAG = "MainActivity";
     //Pending intent used when fetching activity.
     private PendingIntent mPendingIntent;
 
+
     //The Google client
     private GoogleApiClient mClient;
-
-    // Flag that indicates if a request is underway.
-    private boolean mInProgress;
 
     //constants for detection interval.
     private static final int MILLISECONDS_PER_SECOND = 1000;
@@ -73,22 +57,20 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     private boolean mResolvingError;
     private static final String STATE_RESOLVING_ERROR = "resolving_error";
 
+    //Used for the bus locations.
+    private String selectedBus;
+    private boolean updateBus;
+    private static final String SELECTED_BUS = "selectedbus";
+    enum BusLocation {START, STOP}
 
-    //Used for User Location.
-    private Location location;
-    private LocationRequest mLocationRequest;
-    private boolean mLocationUpdateOn;
-    private boolean mLocationUpdateRequested;
-    private static final String LOCATION_UPDATE = "locationStatus";
-    private static final String LOCATION_UPDATE_REQUESTED = "locationStatusRequested";
-    public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 15000;
-    public static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
-            UPDATE_INTERVAL_IN_MILLISECONDS / 2;
+    MapViewFragment mapFrag;
 
-    private FragmentManager mFragmentManager;
-    private MapFragment mMapFragment;
-    private GoogleMap map;
-    private Marker marker;
+    //Helper Classes
+    private static ParseDbHelper mHelper;
+
+    //Notification action string.
+    private String action;
+    private static final String ACTION = "action";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,50 +79,31 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
         //set variables
         mPendingIntent = null;
-        mFragmentManager = getFragmentManager();
-        mClient = null;
-        mInProgress = false;
-        location = null;
-        map = null;
-        marker = null;
-        mResolvingError = savedInstanceState != null
-                && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
-        mLocationUpdateOn = savedInstanceState != null
-                && savedInstanceState.getBoolean(LOCATION_UPDATE, false);
-        mLocationUpdateRequested = savedInstanceState != null
-                && savedInstanceState.getBoolean(LOCATION_UPDATE_REQUESTED, false);
 
-        //set up parse database.
-        //Parse.enableLocalDatastore(this);
-        //Parse.initialize(this, "hQN6CcxhmWfWDEX8wnoHx8Nx7BXmaI2asE7WMFUg", "wdlYdmu64NeJR4JMiYZePM3114cZvvoRvwTJRK9T");
-
-        /*//test parse database
-        ParseObject testObject = new ParseObject("TestObject");
-        testObject.put("foo", "bar");
-        testObject.saveInBackground();*/
-
+        //initalize database helper.
+        mHelper = new ParseDbHelper(this);
 
         //start google play services.
         startUpdates();
 
-        String action = getIntent().getStringExtra("activity");
+        if(action == null)
+            action = getIntent().getStringExtra("activity");
+
         if(action != null) {
-            Log.v(TAG, action);
+            Log.i(TAG, action);
 
             Bundle b = new Bundle();
             b.putString("activity", action);
             NotificationFragment nFrag = new NotificationFragment();
             nFrag.setArguments(b);
-
-            mFragmentManager.beginTransaction()
+            //start the notification fragment.
+            getFragmentManager().beginTransaction()
                     .add(R.id.container, nFrag)
                     .commit();
-
         }else {
-
             //display start Fragment.
             if (savedInstanceState == null) {
-                mFragmentManager.beginTransaction()
+                getFragmentManager().beginTransaction()
                         .add(R.id.container, new StartFragment())
                         .commit();
             }
@@ -148,35 +111,69 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
+        Log.d(TAG, "storing state");
+        //To know if we were resolving an error.
         outState.putBoolean(STATE_RESOLVING_ERROR, mResolvingError);
-        outState.putBoolean(LOCATION_UPDATE, mLocationUpdateOn);
-        outState.putBoolean(LOCATION_UPDATE_REQUESTED, mLocationUpdateRequested);
+        //saves the selectedBus variable.
+        outState.putString(SELECTED_BUS, selectedBus);
+        outState.putBoolean("updatebus", updateBus);
+        //saves the action string if set.
+        outState.putString(ACTION, action);
+
     }
 
     @Override
+    public void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        Log.d(TAG, "resoling state");
+        super.onRestoreInstanceState(savedInstanceState);
+
+        mResolvingError = savedInstanceState.getBoolean(STATE_RESOLVING_ERROR);
+        selectedBus = savedInstanceState.getString(SELECTED_BUS);
+        updateBus = savedInstanceState.getBoolean("updatebus");
+        action = savedInstanceState.getString(ACTION, null);
+
+    }
+
+    public ParseDbHelper getParseDbHelper(){
+        return mHelper;
+    }
+
+   /* @Override
     protected void onResume() {
         super.onResume();
-        if(mLocationUpdateRequested && !mLocationUpdateOn)
-            startLocationUpdates();
+        if(mClient != null && mLocationRequest != null && mLocationUpdateRequested && !mLHelper.isLocationUpdateOn())
+            mLHelper.startLocationUpdates(mClient, mLocationRequest); //turns back on location updates if user requested.
     }
 
     @Override
     protected void onPause() {
-        if(mLocationUpdateOn)
-            stopLocationUpdates();
+        if(mLHelper.isLocationUpdateOn())
+            //stops the location updates if on when not in foreground.
+            mLHelper.stopLocationUpdates(mClient);
         super.onPause();
+    }*/
+
+    private void exitActivity(){
+        stopUpdates();
+        mResolvingError = false;
+        selectedBus = null;
+        updateBus = false;
+        action = null;
+        finish();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_RESOLVE_ERROR) {
-            //used on google services and connection failures.
+        //used for the google fail call back.
+        if (requestCode == REQUEST_RESOLVE_ERROR) {
             mResolvingError = false;
-            startUpdates();
-        }else
-            Log.d(TAG, "Error: Bad request code in onActivityResults");
+            if (resultCode == RESULT_OK) {
+                // Make sure the app is not already connected or attempting to connect
+                startUpdates();
+            }
+        }
     }
 
     @Override
@@ -195,14 +192,13 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_exit ) {
-            stopUpdates();
-            finish();
+            exitActivity();
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    /*Start of the Google Services Implementation*/
+    /** Start of the Google Services Implementation **/
 
     //check for google services if not you should probably display something.
     public void serviceAvailable(){
@@ -214,21 +210,25 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     }
 
     protected synchronized void buildGoogleApiClient() {
-        mClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .addApi(ActivityRecognition.API)
-                .build();
+        if(mClient == null)
+            mClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .addApi(ActivityRecognition.API)
+                    .build();
+        //otherwise you already have a client.
+    }
+
+    public GoogleApiClient getClient(){
+        return mClient;
     }
 
     public void startUpdates() {
         Log.i(TAG, "Starting updates");
         serviceAvailable(); //check if google services is available.
         buildGoogleApiClient(); //make a client
-        createLocationRequest();
-        // Request a connection to Location Services
-        // on failure disconnect service and try again.
+        // Request a connection to Location Services.
         if(!connect()){
             Log.d(TAG, "startUpdates: issue connecting going to try again");
             disconnect();
@@ -239,22 +239,17 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     public void stopUpdates() {
         Log.i(TAG, "Stopping updates");
         serviceAvailable(); // Check for Google Play services
-        if(mClient.isConnected()){
-            ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mClient, mPendingIntent);
-            if(mLocationUpdateOn) {
-                stopLocationUpdates();
-                mLocationUpdateRequested = false;
-            }
-            disconnect();
-        }else{
+        if(!mClient.isConnected())
             connect();
-            stopUpdates();
-        }
+        ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mClient, mPendingIntent);
+        //remove location updates if map fragment is showing.
+        if(mapFrag != null && mapFrag.isVisible())
+            mapFrag.stopLocationUpdates(mClient);
+        disconnect();
     }
 
     private boolean connect() {
-        if (!mInProgress && !mClient.isConnected() && !mClient.isConnecting()) {
-            mInProgress = true;
+        if (!mClient.isConnected() && !mClient.isConnecting()) {
             mClient.connect();
             return true;
         } else {
@@ -266,7 +261,6 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     public boolean disconnect(){
         if (mClient.isConnected()) {
             mClient.disconnect();
-            mInProgress = false;
             return true;
         } else {
             Log.v(TAG, "GoogleApiClient already disconnected or is unavailable");
@@ -288,14 +282,12 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     public void onConnected(Bundle dataBundle) {
         //request activity recognition updates and get last know location.
         Log.v(TAG, "onConnected called with start");
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mClient, DETECTION_INTERVAL_MILLISECONDS, getPendingIntent());
-        getCurrentLocation();
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mClient,
+                DETECTION_INTERVAL_MILLISECONDS, getPendingIntent());
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-
-        mInProgress = false;
         Log.v(TAG, "yah there was a connection failure, sorry");
         if (mResolvingError) {
             // Already attempting to resolve an error.
@@ -310,8 +302,8 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
             }
         } else {
             // Show dialog using GooglePlayServicesUtil.getErrorDialog()
-            showErrorDialog(connectionResult.getErrorCode());
             mResolvingError = true;
+            showErrorDialog(connectionResult.getErrorCode());
         }
     }
 
@@ -322,125 +314,38 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
         Bundle args = new Bundle();
         args.putInt(DIALOG_ERROR, errorCode);
         dialogFragment.setArguments(args);
-        dialogFragment.show(mFragmentManager, "errordialog");
+        dialogFragment.show(getFragmentManager(), "errordialog");
     }
 
     public void onDialogDismissed() {
         mResolvingError = false;
-        startUpdates();
     }
 
     @Override
     public void onConnectionSuspended(int arg0) {
-        //TODO: you should fill this in also.
         Log.d(TAG, "The connection was Suspended");
     }
 
-
-    /*This Section used for user location*/
-
-    protected void createLocationRequest() {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
-        mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-    }
-
-    private void startLocationUpdates(){
-        if(mClient != null && mClient.isConnected() && mLocationRequest != null && !mLocationUpdateOn) {
-            Log.i(TAG, "Starting Location Updates");
-            LocationServices.FusedLocationApi.requestLocationUpdates(mClient, mLocationRequest, this);
-            mLocationUpdateOn = true;
-        }else{
-            Log.d(TAG, "Issue starting Location Updates");
-        }
-    }
-
-    private void stopLocationUpdates() {
-        Log.i(TAG, "Stopping Location Update");
-        if(mClient != null && mLocationUpdateOn) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
-            mLocationUpdateOn = false;
-        }else
-            Log.d(TAG, "issue stopping location updates");
-    }
-
-    public Location getCurrentLocation() {
-        if(location == null)
-            location = LocationServices.FusedLocationApi.getLastLocation(mClient);
-        return location;
-
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if(this.location != location) {
-            this.location = location;
-            //update markers and camera location.
-            if (map != null) {
-                if (marker != null)
-                    marker.remove();
-                marker = setNewMarker();
-                map.moveCamera(updateCamera());
-            }
-            Toast.makeText(this, "Location Update: "+this.location.getLatitude()+", "+this.location.getLongitude(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-
-    /*Start of Google Map Implementation*/
+    /** callback method of start fragment **/
 
     @Override
     public void find(String bus_selection) {
-
-       if(!mLocationUpdateOn) {
-           startLocationUpdates();
-           mLocationUpdateRequested = true;
-       }
-        //take selection, find the info for that bus
-        //then launch appropriate fragment.
-       //TODO: start asynch task to fetch latest bus information if available.
-        startMapFragment();
+        selectedBus = bus_selection;
+        //start map fragment.
+        mapFrag = new MapViewFragment();
+        getFragmentManager().beginTransaction()
+                .replace(R.id.container, mapFrag)
+                .addToBackStack(null)
+                .commit();
     }
 
-    private void startMapFragment(){
-        mMapFragment = MapFragment.newInstance();
-        mFragmentManager.beginTransaction()
-            .replace(R.id.container, mMapFragment)
-            .addToBackStack(null)
-            .commit();
-        mMapFragment.getMapAsync(this);
-    }
-
-    private Marker setNewMarker(){
-        LatLng latLng = new LatLng(getCurrentLocation().getLatitude(),
-                                   getCurrentLocation().getLongitude());
-        return map.addMarker(new MarkerOptions()
-                .position(latLng)
-                .title("Your Current Location"));
-    }
-
-    private CameraUpdate updateCamera(){
-        LatLng latlng = new LatLng(getCurrentLocation().getLatitude(),
-                                   getCurrentLocation().getLongitude());
-        return CameraUpdateFactory.newLatLngZoom(latlng, 15);
-    }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        map = googleMap;
-        marker = setNewMarker();
-        map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        map.setIndoorEnabled(false);
-        map.moveCamera(updateCamera());
-
-    }
-
-    /* callback methods for Notification Fragments*/
+    /**  callback methods for Notification Fragments **/
+    //TODO: impliment these.
     @Override
     public void updateBus(){
         Log.i(TAG, "Updating the location of the bus");
         //update bus location.
+        updateBus = true;
     }
     @Override
     public void waitForBus(){
@@ -450,8 +355,7 @@ public class MainActivity extends Activity implements OnMapReadyCallback,
     @Override
     public void exit(){
         Log.i(TAG, "made it to exit function");
-        stopUpdates();
-        finish();
+        exitActivity();
     }
 
     /* A fragment to display an error dialog */
