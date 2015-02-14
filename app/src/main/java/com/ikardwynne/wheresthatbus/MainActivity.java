@@ -25,9 +25,7 @@ import com.google.android.gms.location.LocationServices;
 
 
 /*
-  TODO: Fix issue of restarting map view after pressing back button.
   TODO: attach parse db helper.
-  TODO: finish basic testing.
   TODO: seems to be sending multiple notifications on waiting of bus.
   TODO: shared Preferences.
  */
@@ -42,6 +40,8 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
 
     //The Google client
     private GoogleApiClient mClient;
+
+    //parse db helper
 
     //constants for detection interval.
     private static final int MILLISECONDS_PER_SECOND = 1000;
@@ -61,12 +61,8 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     private String selectedBus;
     private boolean updateBus;
     private static final String SELECTED_BUS = "selectedbus";
-    enum BusLocation {START, STOP}
 
     MapViewFragment mapFrag;
-
-    //Helper Classes
-    private static ParseDbHelper mHelper;
 
     //Notification action string.
     private String action;
@@ -79,9 +75,6 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
 
         //set variables
         mPendingIntent = null;
-
-        //initalize database helper.
-        mHelper = new ParseDbHelper(this);
 
         //start google play services.
         startUpdates();
@@ -136,25 +129,6 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
 
     }
 
-    public ParseDbHelper getParseDbHelper(){
-        return mHelper;
-    }
-
-   /* @Override
-    protected void onResume() {
-        super.onResume();
-        if(mClient != null && mLocationRequest != null && mLocationUpdateRequested && !mLHelper.isLocationUpdateOn())
-            mLHelper.startLocationUpdates(mClient, mLocationRequest); //turns back on location updates if user requested.
-    }
-
-    @Override
-    protected void onPause() {
-        if(mLHelper.isLocationUpdateOn())
-            //stops the location updates if on when not in foreground.
-            mLHelper.stopLocationUpdates(mClient);
-        super.onPause();
-    }*/
-
     private void exitActivity(){
         stopUpdates();
         mResolvingError = false;
@@ -178,23 +152,17 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_exit ) {
-            exitActivity();
+        switch (item.getItemId()){
+            case R.id.action_exit:
+                exitActivity();
+                break;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -287,12 +255,14 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     }
 
     @Override
+    public void onConnectionSuspended(int arg0) {
+        Log.d(TAG, "The connection was Suspended");
+    }
+
+    @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         Log.v(TAG, "yah there was a connection failure, sorry");
-        if (mResolvingError) {
-            // Already attempting to resolve an error.
-            return;
-        } else if (connectionResult.hasResolution()) {
+        if (connectionResult.hasResolution() && !mResolvingError) {
             try {
                 mResolvingError = true;
                 connectionResult.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
@@ -300,7 +270,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
                 // There was an error with the resolution intent. Try again.
                 startUpdates();
             }
-        } else {
+        } else if(!mResolvingError) {
             // Show dialog using GooglePlayServicesUtil.getErrorDialog()
             mResolvingError = true;
             showErrorDialog(connectionResult.getErrorCode());
@@ -321,11 +291,6 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         mResolvingError = false;
     }
 
-    @Override
-    public void onConnectionSuspended(int arg0) {
-        Log.d(TAG, "The connection was Suspended");
-    }
-
     /** callback method of start fragment **/
 
     @Override
@@ -337,6 +302,10 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
                 .replace(R.id.container, mapFrag)
                 .addToBackStack(null)
                 .commit();
+    }
+
+    protected String getSelectedBus(){
+        return selectedBus;
     }
 
     /**  callback methods for Notification Fragments **/

@@ -6,6 +6,7 @@ import android.app.Fragment;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 
 /**
@@ -30,9 +32,11 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
     private static final String TAG = "MapViewFragment";
     private MainActivity mainActivity;
 
+    private static View view;
+    private ParseDbHelper mParseDbHelper;
+
     //Variables for google map
     private GoogleMap map;
-    //private Marker marker;
     private GoogleApiClient mClient;
 
     //Variables for location updates.
@@ -57,21 +61,31 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        mLocationRequest = createLocationRequest();
+        mParseDbHelper = new ParseDbHelper(mainActivity);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.map_fragment, container, false);
+        // if  view is already set, remove parent if present.
+        if(view != null){
+            ViewGroup parent = (ViewGroup) view.getParent();
+            if(parent != null)
+                parent.removeView(view);
+        }
+        try {
+            view = inflater.inflate(R.layout.map_fragment, container, false);
+        }catch (InflateException ignored){}
+        return view;
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mClient = mainActivity.getClient();
-        mLocationRequest = createLocationRequest();
-        location = LocationServices.FusedLocationApi.getLastLocation(mClient);
+        if(isValidClient())
+            location = LocationServices.FusedLocationApi.getLastLocation(mClient);
         MapFragment mapFragment = (MapFragment) getFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -92,19 +106,24 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
 
     /** Google Map Section **/
 
+    private boolean isValidClient(){
+        return mClient != null && mClient.isConnected();
+    }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
-        //marker = setNewMarker();
+        map.clear();
         map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         map.getUiSettings().setZoomControlsEnabled(true);
         map.setMyLocationEnabled(true);
         map.setIndoorEnabled(false);
         map.moveCamera(updateCamera());
+        getBusLocation();
         map.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
             @Override
             public boolean onMyLocationButtonClick() {
-                if(location == null)
+                if(location == null && isValidClient())
                     location = LocationServices.FusedLocationApi.getLastLocation(mClient);
                 map.moveCamera(updateCamera());
                 return true;
@@ -112,27 +131,10 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
         });
     }
 
-    /*private Marker setNewMarker(){
-        return map.addMarker(new MarkerOptions()
-                .position(new LatLng(location.getLatitude(),location.getLongitude()))
-                .title("Your Current Location"));
-    }*/
-
     private CameraUpdate updateCamera(){
-        LatLng latlng = new LatLng(location.getLatitude(),location.getLongitude());
-        return CameraUpdateFactory.newLatLngZoom(latlng, 15);
+        return CameraUpdateFactory.newLatLngZoom(
+                new LatLng(location.getLatitude(),location.getLongitude()), 15);
     }
-
-    /*protected void updateMap(){
-        //update markers and camera location.
-        if (map != null) {
-            Toast.makeText(mainActivity, "Updating map", Toast.LENGTH_SHORT).show();
-            if (marker != null)
-                marker.remove();
-            marker = setNewMarker();
-        }else
-            Log.d(TAG, "map is null");
-    }*/
 
     /** Location Section **/
 
@@ -147,7 +149,7 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
     }
 
     protected void startLocationUpdates(GoogleApiClient mClient){
-        if(mClient != null && mClient.isConnected() && mLocationRequest != null && !mLocationUpdateOn) {
+        if(isValidClient() && mLocationRequest != null && !mLocationUpdateOn) {
             Log.i(TAG, "Starting Location Updates");
             LocationServices.FusedLocationApi.requestLocationUpdates(mClient, mLocationRequest, this);
             mLocationUpdateOn = true;
@@ -158,7 +160,7 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
 
     protected void stopLocationUpdates(GoogleApiClient mClient) {
         Log.i(TAG, "Stopping Location Update");
-        if(mClient != null && mClient.isConnected() && mLocationUpdateOn) {
+        if(isValidClient() && mLocationUpdateOn) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
             mLocationUpdateOn = false;
         }else
@@ -170,15 +172,24 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
         //should now call an update map method in main activity.
         if(this.location != location) {
             this.location = location;
-            //updateMap();
         }
     }
 
+    /** Parse Database Section **/
 
+    protected void setBusLocation(){
+        String bus = mainActivity.getSelectedBus();
+        if(location != null && bus != null)
+            mParseDbHelper.setBusLocation(bus, location);
+        //add the new location to the map.
+        map.addMarker(new MarkerOptions()
+                .position(new LatLng(location.getLatitude(), location.getLongitude()))
+                .title(bus));
+    }
 
-
-
-
-
-
+    protected void getBusLocation(){
+        String bus = mainActivity.getSelectedBus();
+        if(map != null && bus != null)
+            mParseDbHelper.getBusLocation(bus, map);
+    }
 }
