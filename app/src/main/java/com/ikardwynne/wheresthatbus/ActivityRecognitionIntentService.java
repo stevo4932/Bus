@@ -14,7 +14,7 @@ import com.google.android.gms.location.DetectedActivity;
 public class ActivityRecognitionIntentService extends IntentService {
 
     private static final String TAG = "ActivityRecognitionIntentService";
-    private static final int MIN_CONFIDENCE_LEVEL = 75;
+    private static final int MIN_CONFIDENCE_LEVEL = 70;
     private static final int UPDATE_ID = 5;
     private int lastActivity = -1;
 
@@ -55,12 +55,7 @@ public class ActivityRecognitionIntentService extends IntentService {
                     lastActivity = activityType;
                 }
             }
-        }else {
-            /*This implementation ignores intents that don't contain
-              an activity update. */
-            Log.d(TAG, "Error: No activity update");
         }
-
     }
 
     //REMOVE: for testing purposes only.

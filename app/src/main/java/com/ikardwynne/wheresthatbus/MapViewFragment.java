@@ -10,6 +10,7 @@ import android.view.InflateException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -34,6 +35,8 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
 
     private static View view;
     private ParseDbHelper mParseDbHelper;
+
+    private String selectedBus;
 
     //Variables for google map
     private GoogleMap map;
@@ -60,7 +63,6 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
         mLocationRequest = createLocationRequest();
         mParseDbHelper = new ParseDbHelper(mainActivity);
     }
@@ -84,8 +86,11 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mClient = mainActivity.getClient();
-        if(isValidClient())
-            location = LocationServices.FusedLocationApi.getLastLocation(mClient);
+        Bundle b = this.getArguments();
+        selectedBus = b.getString("bus");
+        boolean update = b.getBoolean("update");
+        if(isValidClient() && update)
+                setBusLocation();
         MapFragment mapFragment = (MapFragment) getFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -95,12 +100,12 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
     @Override
     public void onResume() {
         super.onResume();
-        startLocationUpdates(mClient);
+        //startLocationUpdates(mClient);
     }
 
     @Override
     public void onPause() {
-       stopLocationUpdates(mClient);
+       //stopLocationUpdates(mClient);
        super.onPause();
     }
 
@@ -118,22 +123,17 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
         map.getUiSettings().setZoomControlsEnabled(true);
         map.setMyLocationEnabled(true);
         map.setIndoorEnabled(false);
-        map.moveCamera(updateCamera());
+        updateCamera();
         getBusLocation();
-        map.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
-            @Override
-            public boolean onMyLocationButtonClick() {
-                if(location == null && isValidClient())
-                    location = LocationServices.FusedLocationApi.getLastLocation(mClient);
-                map.moveCamera(updateCamera());
-                return true;
-            }
-        });
     }
 
-    private CameraUpdate updateCamera(){
-        return CameraUpdateFactory.newLatLngZoom(
-                new LatLng(location.getLatitude(),location.getLongitude()), 15);
+    private void updateCamera(){
+        if(isValidClient()) {
+            location = LocationServices.FusedLocationApi.getLastLocation(mClient);
+             CameraUpdate camera = CameraUpdateFactory.newLatLngZoom(
+                    new LatLng(location.getLatitude(), location.getLongitude()), 15);
+            map.moveCamera(camera);
+        }
     }
 
     /** Location Section **/
@@ -170,26 +170,37 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
     @Override
     public void onLocationChanged(Location location) {
         //should now call an update map method in main activity.
+        Toast.makeText(mainActivity, "Location Updated", Toast.LENGTH_SHORT).show();
+        stopLocationUpdates(mClient);
         if(this.location != location) {
             this.location = location;
+            setLocationMarker();
         }
+
+
     }
 
     /** Parse Database Section **/
 
     protected void setBusLocation(){
-        String bus = mainActivity.getSelectedBus();
-        if(location != null && bus != null)
-            mParseDbHelper.setBusLocation(bus, location);
+        //first get an location update
+        if(isValidClient())
+            startLocationUpdates(mClient);
+
+    }
+
+    private void setLocationMarker(){
+        //update the parse database.
+        if(location != null && selectedBus != null)
+            mParseDbHelper.setBusLocation(selectedBus, location);
         //add the new location to the map.
         map.addMarker(new MarkerOptions()
                 .position(new LatLng(location.getLatitude(), location.getLongitude()))
-                .title(bus));
+                .title(selectedBus + " bus"));
     }
 
     protected void getBusLocation(){
-        String bus = mainActivity.getSelectedBus();
-        if(map != null && bus != null)
-            mParseDbHelper.getBusLocation(bus, map);
+        if(map != null && selectedBus != null)
+            mParseDbHelper.getBusLocation(selectedBus, map);
     }
 }
