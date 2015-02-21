@@ -17,12 +17,9 @@
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="app: com.ikardwynne.wheresthatbus" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="011aa3e2-a4b9-4a4e-b616-b110255ae76e" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/app/src/main/res/menu/map_menu.xml" />
+    <list default="true" id="011aa3e2-a4b9-4a4e-b616-b110255ae76e" name="Default" comment="update application flow and exit strategies.">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MainActivity.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MainActivity.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MapViewFragment.java" afterPath="$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MapViewFragment.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/res/menu/menu_main.xml" afterPath="$PROJECT_DIR$/app/src/main/res/menu/menu_main.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" afterPath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="Where's That Bus.iws" />
@@ -54,18 +51,28 @@
       <file leaf-file-name="MainActivity.java" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MainActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.49756098" vertical-offset="0" max-vertical-offset="7002">
-              <caret line="41" column="26" selection-start-line="41" selection-start-column="26" selection-end-line="41" selection-end-column="26" />
+            <state vertical-scroll-proportion="0.36062378" vertical-offset="2407" max-vertical-offset="7002">
+              <caret line="168" column="40" selection-start-line="168" selection-start-column="40" selection-end-line="168" selection-end-column="40" />
               <folding>
-                <element signature="e#5512#5698#0" expanded="true" />
-                <element signature="e#5675#5676#0" expanded="true" />
-                <element signature="e#5745#6028#0" expanded="true" />
-                <element signature="e#6005#6006#0" expanded="true" />
-                <element signature="e#9098#9701#0" expanded="true" />
-                <element signature="e#9686#9687#0" expanded="true" />
-                <element signature="e#10789#10790#0" expanded="true" />
-                <element signature="e#10847#10848#0" expanded="true" />
+                <element signature="e#5335#5521#0" expanded="true" />
+                <element signature="e#5498#5499#0" expanded="true" />
+                <element signature="e#5568#5851#0" expanded="true" />
+                <element signature="e#5828#5829#0" expanded="true" />
+                <element signature="e#8903#9506#0" expanded="true" />
+                <element signature="e#9491#9492#0" expanded="true" />
+                <element signature="e#10929#10930#0" expanded="true" />
+                <element signature="e#10987#10988#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ParseDbHelper.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/ParseDbHelper.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0" vertical-offset="669" max-vertical-offset="1494">
+              <caret line="75" column="10" selection-start-line="75" selection-start-column="10" selection-end-line="75" selection-end-column="10" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -73,8 +80,8 @@
       <file leaf-file-name="MapViewFragment.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MapViewFragment.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="1364" max-vertical-offset="3816">
-              <caret line="121" column="5" selection-start-line="121" selection-start-column="5" selection-end-line="121" selection-end-column="5" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="1042" max-vertical-offset="3870">
+              <caret line="97" column="39" selection-start-line="97" selection-start-column="39" selection-end-line="97" selection-end-column="39" />
               <folding />
             </state>
           </provider>
@@ -712,16 +719,16 @@
         <option value="$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/ActivityRecognitionIntentService.java" />
         <option value="$PROJECT_DIR$/app/src/main/res/menu/menu_main.xml" />
         <option value="$PROJECT_DIR$/app/src/main/res/values/strings.xml" />
-        <option value="$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MapViewFragment.java" />
         <option value="$PROJECT_DIR$/app/src/main/res/menu/map_menu.xml" />
+        <option value="$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MapViewFragment.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MainActivity.java" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1363" />
+    <option name="x" value="-3" />
     <option name="width" value="1286" />
-    <option name="height" value="1027" />
+    <option name="height" value="994" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <OptionsSetting value="true" id="Add" />
@@ -1107,7 +1114,11 @@
       <created>1424474595642</created>
       <updated>1424474595642</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="update application flow and exit strategies.">
+      <created>1424478964304</created>
+      <updated>1424478964304</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -1131,11 +1142,11 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1363" y="0" width="1286" height="1027" extended-state="6" />
+    <frame x="-3" y="0" width="1286" height="994" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3286385" sideWeight="0.5" order="15" side_tool="false" content_ui="tabs" />
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32885906" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3286385" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32718122" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Build Variants" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -1145,10 +1156,10 @@
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.23909532" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24496645" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24413146" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32885906" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32718122" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
-      <window_info id="Android" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.259887" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
+      <window_info id="Android" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.35093898" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
       <window_info id="Gradle Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32885906" sideWeight="0.5" order="13" side_tool="true" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.18820679" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -1218,7 +1229,9 @@
     <MESSAGE value="changed to using map fragment class" />
     <MESSAGE value="Added fetching of Bus Location" />
     <MESSAGE value="Added Persistent notifications and variables" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added Persistent notifications and variables" />
+    <MESSAGE value="Update application flow and exit stratigies" />
+    <MESSAGE value="update application flow and exit strategies." />
+    <option name="LAST_COMMIT_MESSAGE" value="update application flow and exit strategies." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -1260,14 +1273,14 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="4020">
           <caret line="202" column="18" selection-start-line="202" selection-start-column="18" selection-end-line="202" selection-end-column="18" />
           <folding>
-            <element signature="e#5512#5698#0" expanded="true" />
-            <element signature="e#5675#5676#0" expanded="true" />
-            <element signature="e#5745#6028#0" expanded="true" />
-            <element signature="e#6005#6006#0" expanded="true" />
-            <element signature="e#9098#9701#0" expanded="true" />
-            <element signature="e#9686#9687#0" expanded="true" />
-            <element signature="e#10789#10790#0" expanded="true" />
-            <element signature="e#10847#10848#0" expanded="true" />
+            <element signature="e#5335#5521#0" expanded="true" />
+            <element signature="e#5498#5499#0" expanded="true" />
+            <element signature="e#5568#5851#0" expanded="true" />
+            <element signature="e#5828#5829#0" expanded="true" />
+            <element signature="e#8903#9506#0" expanded="true" />
+            <element signature="e#9491#9492#0" expanded="true" />
+            <element signature="e#10929#10930#0" expanded="true" />
+            <element signature="e#10987#10988#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1315,14 +1328,14 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="3030" max-vertical-offset="4020">
           <caret line="202" column="18" selection-start-line="202" selection-start-column="18" selection-end-line="202" selection-end-column="18" />
           <folding>
-            <element signature="e#5512#5698#0" expanded="true" />
-            <element signature="e#5675#5676#0" expanded="true" />
-            <element signature="e#5745#6028#0" expanded="true" />
-            <element signature="e#6005#6006#0" expanded="true" />
-            <element signature="e#9098#9701#0" expanded="true" />
-            <element signature="e#9686#9687#0" expanded="true" />
-            <element signature="e#10789#10790#0" expanded="true" />
-            <element signature="e#10847#10848#0" expanded="true" />
+            <element signature="e#5335#5521#0" expanded="true" />
+            <element signature="e#5498#5499#0" expanded="true" />
+            <element signature="e#5568#5851#0" expanded="true" />
+            <element signature="e#5828#5829#0" expanded="true" />
+            <element signature="e#8903#9506#0" expanded="true" />
+            <element signature="e#9491#9492#0" expanded="true" />
+            <element signature="e#10929#10930#0" expanded="true" />
+            <element signature="e#10987#10988#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1356,14 +1369,14 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="4020">
           <caret line="202" column="18" selection-start-line="202" selection-start-column="18" selection-end-line="202" selection-end-column="18" />
           <folding>
-            <element signature="e#5512#5698#0" expanded="true" />
-            <element signature="e#5675#5676#0" expanded="true" />
-            <element signature="e#5745#6028#0" expanded="true" />
-            <element signature="e#6005#6006#0" expanded="true" />
-            <element signature="e#9098#9701#0" expanded="true" />
-            <element signature="e#9686#9687#0" expanded="true" />
-            <element signature="e#10789#10790#0" expanded="true" />
-            <element signature="e#10847#10848#0" expanded="true" />
+            <element signature="e#5335#5521#0" expanded="true" />
+            <element signature="e#5498#5499#0" expanded="true" />
+            <element signature="e#5568#5851#0" expanded="true" />
+            <element signature="e#5828#5829#0" expanded="true" />
+            <element signature="e#8903#9506#0" expanded="true" />
+            <element signature="e#9491#9492#0" expanded="true" />
+            <element signature="e#10929#10930#0" expanded="true" />
+            <element signature="e#10987#10988#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1397,14 +1410,14 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="1080" max-vertical-offset="4806">
           <caret line="73" column="0" selection-start-line="73" selection-start-column="0" selection-end-line="73" selection-end-column="0" />
           <folding>
-            <element signature="e#5512#5698#0" expanded="true" />
-            <element signature="e#5675#5676#0" expanded="true" />
-            <element signature="e#5745#6028#0" expanded="true" />
-            <element signature="e#6005#6006#0" expanded="true" />
-            <element signature="e#9098#9701#0" expanded="true" />
-            <element signature="e#9686#9687#0" expanded="true" />
-            <element signature="e#10789#10790#0" expanded="true" />
-            <element signature="e#10847#10848#0" expanded="true" />
+            <element signature="e#5335#5521#0" expanded="true" />
+            <element signature="e#5498#5499#0" expanded="true" />
+            <element signature="e#5568#5851#0" expanded="true" />
+            <element signature="e#5828#5829#0" expanded="true" />
+            <element signature="e#8903#9506#0" expanded="true" />
+            <element signature="e#9491#9492#0" expanded="true" />
+            <element signature="e#10929#10930#0" expanded="true" />
+            <element signature="e#10987#10988#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1448,14 +1461,14 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="1080" max-vertical-offset="4878">
           <caret line="73" column="0" selection-start-line="73" selection-start-column="0" selection-end-line="73" selection-end-column="0" />
           <folding>
-            <element signature="e#5512#5698#0" expanded="true" />
-            <element signature="e#5675#5676#0" expanded="true" />
-            <element signature="e#5745#6028#0" expanded="true" />
-            <element signature="e#6005#6006#0" expanded="true" />
-            <element signature="e#9098#9701#0" expanded="true" />
-            <element signature="e#9686#9687#0" expanded="true" />
-            <element signature="e#10789#10790#0" expanded="true" />
-            <element signature="e#10847#10848#0" expanded="true" />
+            <element signature="e#5335#5521#0" expanded="true" />
+            <element signature="e#5498#5499#0" expanded="true" />
+            <element signature="e#5568#5851#0" expanded="true" />
+            <element signature="e#5828#5829#0" expanded="true" />
+            <element signature="e#8903#9506#0" expanded="true" />
+            <element signature="e#9491#9492#0" expanded="true" />
+            <element signature="e#10929#10930#0" expanded="true" />
+            <element signature="e#10987#10988#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1499,14 +1512,14 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1296">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#5512#5698#0" expanded="true" />
-            <element signature="e#5675#5676#0" expanded="true" />
-            <element signature="e#5745#6028#0" expanded="true" />
-            <element signature="e#6005#6006#0" expanded="true" />
-            <element signature="e#9098#9701#0" expanded="true" />
-            <element signature="e#9686#9687#0" expanded="true" />
-            <element signature="e#10789#10790#0" expanded="true" />
-            <element signature="e#10847#10848#0" expanded="true" />
+            <element signature="e#5335#5521#0" expanded="true" />
+            <element signature="e#5498#5499#0" expanded="true" />
+            <element signature="e#5568#5851#0" expanded="true" />
+            <element signature="e#5828#5829#0" expanded="true" />
+            <element signature="e#8903#9506#0" expanded="true" />
+            <element signature="e#9491#9492#0" expanded="true" />
+            <element signature="e#10929#10930#0" expanded="true" />
+            <element signature="e#10987#10988#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1625,13 +1638,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/ParseDbHelper.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.36363637" vertical-offset="0" max-vertical-offset="1494">
-          <caret line="24" column="48" selection-start-line="24" selection-start-column="48" selection-end-line="24" selection-end-column="48" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/ActivityRecognitionIntentService.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="1203" max-vertical-offset="1926">
@@ -1656,14 +1662,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MapViewFragment.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="1364" max-vertical-offset="3816">
-          <caret line="121" column="5" selection-start-line="121" selection-start-column="5" selection-end-line="121" selection-end-column="5" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/res/menu/menu_main.xml">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="270">
@@ -1684,19 +1682,35 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/ParseDbHelper.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="669" max-vertical-offset="1494">
+          <caret line="75" column="10" selection-start-line="75" selection-start-column="10" selection-end-line="75" selection-end-column="10" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MapViewFragment.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="1042" max-vertical-offset="3870">
+          <caret line="97" column="39" selection-start-line="97" selection-start-column="39" selection-end-line="97" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ikardwynne/wheresthatbus/MainActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.49756098" vertical-offset="0" max-vertical-offset="7002">
-          <caret line="41" column="26" selection-start-line="41" selection-start-column="26" selection-end-line="41" selection-end-column="26" />
+        <state vertical-scroll-proportion="0.36062378" vertical-offset="2407" max-vertical-offset="7002">
+          <caret line="168" column="40" selection-start-line="168" selection-start-column="40" selection-end-line="168" selection-end-column="40" />
           <folding>
-            <element signature="e#5512#5698#0" expanded="true" />
-            <element signature="e#5675#5676#0" expanded="true" />
-            <element signature="e#5745#6028#0" expanded="true" />
-            <element signature="e#6005#6006#0" expanded="true" />
-            <element signature="e#9098#9701#0" expanded="true" />
-            <element signature="e#9686#9687#0" expanded="true" />
-            <element signature="e#10789#10790#0" expanded="true" />
-            <element signature="e#10847#10848#0" expanded="true" />
+            <element signature="e#5335#5521#0" expanded="true" />
+            <element signature="e#5498#5499#0" expanded="true" />
+            <element signature="e#5568#5851#0" expanded="true" />
+            <element signature="e#5828#5829#0" expanded="true" />
+            <element signature="e#8903#9506#0" expanded="true" />
+            <element signature="e#9491#9492#0" expanded="true" />
+            <element signature="e#10929#10930#0" expanded="true" />
+            <element signature="e#10987#10988#0" expanded="true" />
           </folding>
         </state>
       </provider>

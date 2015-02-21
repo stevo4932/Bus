@@ -32,6 +32,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
     Fragment class for the google map.
     Displays user's location and bus locations.
  */
+
+
 public class MapViewFragment extends Fragment implements OnMapReadyCallback, LocationListener {
     private static final String TAG = "MapViewFragment";
     private MainActivity mainActivity;
@@ -155,7 +157,8 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
              CameraUpdate camera = CameraUpdateFactory.newLatLngZoom(
                     new LatLng(location.getLatitude(), location.getLongitude()), 15);
             map.moveCamera(camera);
-        }
+        }else
+            Log.d(TAG, "Error: Client not valid");
     }
 
     /** Location Section **/

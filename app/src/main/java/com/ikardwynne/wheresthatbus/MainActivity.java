@@ -30,8 +30,7 @@ import com.google.android.gms.location.LocationServices;
 
 /*
   TODO: Display Dialog instead of the NotificationFragment.
-  TODO: seems to be sending multiple notifications on waiting of bus.
-  TODO: Driving test didn't work.
+  TODO: Test new changes.
  */
 public class MainActivity extends Activity implements ConnectionCallbacks,
                                                       OnConnectionFailedListener, StartFragment.Callbacks,
@@ -69,7 +68,8 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     private String selectedBus;
     private static final String BUS = "Bus";
 
-    MapViewFragment mapFrag;
+    private MapViewFragment mapFrag;
+    private boolean replace;
 
     //Notification action string.
     private String action;
@@ -98,10 +98,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
                     .commit();
         }else if(selectedBus != null){
             //show map fragment with the selected bus.
-            mapFrag = getMapFragment(false);
-            getFragmentManager().beginTransaction()
-                    .add(R.id.container, mapFrag)
-                    .commit();
+            getMapFragment(false, false);
         }else{
             //display start Fragment.
             if (savedInstanceState == null) {
@@ -155,7 +152,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         }else
             finish();
     }
-
+    //this function's days are numbered!
     private void exitActivity(){
         stopUpdates();
         mResolvingError = false;
@@ -170,7 +167,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         if (requestCode == REQUEST_RESOLVE_ERROR) {
             mResolvingError = false;
             if (resultCode == RESULT_OK)
-                // Make sure the app is not already connected or attempting to connect
+                // getMapFragment already called so need to call startUpdates.
                 startUpdates(); /** This should be checked **/
         }
     }
@@ -237,7 +234,6 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
             Log.d(TAG, "Error: Could not connect to google API");
     }
 
-    /*TODO: THis is not working for some reason*/
     public void stopUpdates() {
         Log.i(TAG, "Stopping updates");
         if(mClient != null && mClient.isConnected()) {
@@ -261,6 +257,17 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     public void onConnected(Bundle dataBundle) {
         //request activity recognition updates and get last know location.
         Log.i(TAG, "Client Connected!");
+        //start map fragment.
+
+        if(replace)
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.container, mapFrag)
+                    .commit();
+        else
+            getFragmentManager().beginTransaction()
+                    .add(R.id.container, mapFrag)
+                    .commit();
+
         if(!activityOn) {
             ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mClient,
                     DETECTION_INTERVAL_MILLISECONDS, getPendingIntent()).setResultCallback(new ResultCallback<Status>() {
@@ -334,14 +341,14 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     }
 
     //build and start map fragment.
-    private MapViewFragment getMapFragment(boolean update){
-        startUpdates();
-        MapViewFragment mapFragment = new MapViewFragment();
+    private void getMapFragment(boolean update, boolean replace){
+        this.replace = replace;
+        mapFrag = new MapViewFragment();
         Bundle b = new Bundle();
         b.putString("bus", selectedBus);
         b.putBoolean("update", update);
-        mapFragment.setArguments(b);
-        return mapFragment;
+        mapFrag.setArguments(b);
+        startUpdates();
     }
 
     /** callback method of start fragment **/
@@ -350,23 +357,16 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     public void find(String bus_selection) {
         selectedBus = bus_selection;
         //start google play services.
-        mapFrag = getMapFragment(false);
-        getFragmentManager().beginTransaction()
-                            .replace(R.id.container, mapFrag)
-                            .commit();
+        getMapFragment(false, true);
     }
 
     /**  callback methods for Notification Fragments **/
-    //TODO: implement these.
     @Override
     public void updateBus(){
         Log.i(TAG, "Updating the location of the bus");
         //update bus location.
         action = null;
-        mapFrag = getMapFragment(true);
-        getFragmentManager().beginTransaction()
-                            .replace(R.id.container, mapFrag)
-                            .commit();
+        getMapFragment(true, true);
     }
     @Override
     public void waitForBus(){
