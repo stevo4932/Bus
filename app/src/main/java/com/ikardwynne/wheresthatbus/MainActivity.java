@@ -2,6 +2,7 @@ package com.ikardwynne.wheresthatbus;
 
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.NotificationManager;
@@ -14,8 +15,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -30,12 +29,14 @@ import com.google.android.gms.location.LocationServices;
 
 
 /*
+  TODO: Display Dialog instead of the NotificationFragment.
   TODO: seems to be sending multiple notifications on waiting of bus.
   TODO: Driving test didn't work.
  */
 public class MainActivity extends Activity implements ConnectionCallbacks,
                                                       OnConnectionFailedListener, StartFragment.Callbacks,
-                                                      NotificationFragment.NotificationCallbacks{
+                                                      NotificationFragment.NotificationCallbacks,
+                                                      MapViewFragment.MapCallbacks{
 
     private final static String TAG = "MainActivity";
     //Id for persistent update notifications.
@@ -132,6 +133,29 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         editor.apply();
     }
 
+    @Override
+    public void onBackPressed() {
+        if(activityOn){
+            //Display a alert dialog box asking user if they are going to wait for the bus.
+            new AlertDialog.Builder(this)
+                    .setTitle("Exit")
+                    .setMessage("Are you going to wait for the bus?")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {finish();}
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            stopUpdates();
+                            finish();
+                        }
+                    })
+                    .show();
+        }else
+            finish();
+    }
+
     private void exitActivity(){
         stopUpdates();
         mResolvingError = false;
@@ -151,7 +175,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
         }
     }
 
-    @Override
+    /*@Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
@@ -165,7 +189,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
                 break;
         }
         return super.onOptionsItemSelected(item);
-    }
+    }*/
 
     /** Start of the Google Services Implementation **/
 
@@ -222,7 +246,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
                 public void onResult(Status status) {
                     if (status.isSuccess()) {
                         activityOn = false;
-                        Toast.makeText(MainActivity.this, "Activity Recognition Off", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MainActivity.this, "Activity Recognition Off", Toast.LENGTH_SHORT).show();
                         removeNotification();
                         mClient.disconnect();
                     } else
@@ -244,7 +268,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
                 public void onResult(Status status) {
                     if (status.isSuccess()) {
                         activityOn = true;
-                        Toast.makeText(MainActivity.this, "Activity Recognition on", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MainActivity.this, "Activity Recognition on", Toast.LENGTH_SHORT).show();
                         makeNotification();
                     } else
                         Toast.makeText(MainActivity.this, "Error: Could not turn on Activity Recognition", Toast.LENGTH_SHORT).show();
@@ -338,6 +362,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     public void updateBus(){
         Log.i(TAG, "Updating the location of the bus");
         //update bus location.
+        action = null;
         mapFrag = getMapFragment(true);
         getFragmentManager().beginTransaction()
                             .replace(R.id.container, mapFrag)
@@ -346,12 +371,24 @@ public class MainActivity extends Activity implements ConnectionCallbacks,
     @Override
     public void waitForBus(){
         Log.i(TAG, "waiting for the bus some more");
+        action = null;
         finish();
     }
     @Override
     public void exit(){
         Log.i(TAG, "made it to exit function");
         exitActivity();
+    }
+
+    /** callback method for MapViewFragment **/
+
+    @Override
+    public void newBus() {
+        selectedBus = null;
+        stopUpdates();
+        getFragmentManager().beginTransaction()
+                .replace(R.id.container, new StartFragment())
+                .commit();
     }
 
     /* A fragment to display an error dialog */

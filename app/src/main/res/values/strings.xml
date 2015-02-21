@@ -14,5 +14,6 @@
     <string name="update_camera">Update Camera</string>
     <string name="update_camera_condensed">Update Camera</string>
     <string name="exit">Exit</string>
+    <string name="new_bus">New Bus</string>
 
 </resources>

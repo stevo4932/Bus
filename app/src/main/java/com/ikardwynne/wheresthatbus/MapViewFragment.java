@@ -8,6 +8,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.InflateException;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -50,6 +53,8 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
     private Location location;
     private boolean mLocationUpdateOn;
 
+    private MapCallbacks mapCallbacks;
+
     public MapViewFragment() {
         // Required empty public constructor
     }
@@ -58,11 +63,13 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         mainActivity = (MainActivity) activity;
+        mapCallbacks = (MapCallbacks) activity;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
         mLocationRequest = createLocationRequest();
         mParseDbHelper = new ParseDbHelper(mainActivity);
     }
@@ -107,6 +114,21 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
     public void onPause() {
        //stopLocationUpdates(mClient);
        super.onPause();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.map_menu, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()){
+            case R.id.action_new_bus:
+                mapCallbacks.newBus();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     /** Google Map Section **/
@@ -202,5 +224,9 @@ public class MapViewFragment extends Fragment implements OnMapReadyCallback, Loc
     protected void getBusLocation(){
         if(map != null && selectedBus != null)
             mParseDbHelper.getBusLocation(selectedBus, map);
+    }
+
+    public interface MapCallbacks{
+        public void newBus();
     }
 }
